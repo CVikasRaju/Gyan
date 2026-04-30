@@ -1,0 +1,124 @@
+{
+  "name": "CurrentAI Ingestion Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "id": "e6a1f81d-72a3-4a1d-8e1d-c8a3f81d72a3",
+      "name": "Every Hour",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        100,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "fileContent": "={{ $json.content }}",
+        "options": {}
+      },
+      "id": "f5b2e91c-83b4-5b2d-9f2e-d91c83b45b2d",
+      "name": "Read rss_feeds.json",
+      "type": "n8n-nodes-base.readBinaryFile",
+      "typeVersion": 1,
+      "position": [
+        300,
+        300
+      ],
+      "parameters": {
+        "filePath": "/data/rss_feeds.json"
+      }
+    },
+    {
+      "parameters": {
+        "operation": "toText"
+      },
+      "id": "a1b2c3d4-e5f6-4a5b-b6c7-d8e9f0a1b2c3",
+      "name": "Parse JSON",
+      "type": "n8n-nodes-base.moveBinaryData",
+      "typeVersion": 1,
+      "position": [
+        500,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=http://scraper:8000/extract",
+        "method": "POST",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "={{ $json.link }}"
+            }
+          ]
+        }
+      },
+      "name": "Scrape Full Content",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gemini-1.5-pro",
+        "prompt": "Context: You are the lead editor for CurrentAI, a premium ad-free news platform. \nTask: Summarize the following article text into a noise-free, factual digest. \nConstraints: Use professional journalism tone. Keep it under 150 words. \n\nArticle Title: {{ $json.title }}\nArticle Body: {{ $json.content }}\n\nReturn ONLY the summary text.",
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "name": "Gemini Summarization",
+      "type": "n8n-nodes-base.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        1400,
+        300
+      ],
+      "credentials": {
+        "googleGeminiApi": {
+          "id": "YOUR_CREDS_ID"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Every Hour": {
+      "main": [
+        [
+          {
+            "node": "Read rss_feeds.json",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read rss_feeds.json": {
+      "main": [
+        [
+          {
+            "node": "Parse JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

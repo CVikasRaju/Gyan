@@ -1,0 +1,107 @@
+{
+  "name": "CurrentAI Ingestion Pipeline v2",
+  "nodes": [
+    {
+      "parameters": { "rule": { "interval": [{ "field": "hours" }] } },
+      "name": "Every Hour",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [100, 300]
+    },
+    {
+      "parameters": { "filePath": "/data/rss_feeds.json" },
+      "name": "Read Feeds",
+      "type": "n8n-nodes-base.readBinaryFile",
+      "position": [300, 300]
+    },
+    {
+      "parameters": { "operation": "toText" },
+      "name": "Parse JSON",
+      "type": "n8n-nodes-base.moveBinaryData",
+      "position": [500, 300]
+    },
+    {
+      "parameters": { "url": "={{ $json.url }}" },
+      "name": "RSS Read",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "position": [700, 300]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "table": "digests",
+        "filters": {
+          "conditions": [
+            { "key": "source_url", "operator": "equal", "value": "={{ $json.link }}" }
+          ]
+        }
+      },
+      "name": "Check DB if exists",
+      "type": "n8n-nodes-base.supabase",
+      "position": [900, 300],
+      "credentials": { "supabaseApi": { "id": "YOUR_CREDS" } }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [{ "value1": "={{ $node[\"Check DB if exists\"].json.length }}", "operator": "isEmpty" }]
+        }
+      },
+      "name": "Is it New?",
+      "type": "n8n-nodes-base.if",
+      "position": [1100, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://scraper:8000/extract",
+        "method": "POST",
+        "bodyParameters": {
+          "parameters": [{ "name": "url", "value": "={{ $node[\"RSS Read\"].json.link }}" }]
+        }
+      },
+      "name": "Scrape Full Content",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1300, 200]
+    },
+    {
+      "parameters": {
+        "model": "gemini-1.5-pro",
+        "prompt": "=Context: CurrentAI Newsroom. \nTask: Factually summarize the article into a clean digest. \n\nTitle: {{ $json.title }}\nContent: {{ $json.content }}\n\nReturn ONLY the summary.",
+        "options": { "temperature": 0.2 }
+      },
+      "name": "Gemini Summary",
+      "type": "n8n-nodes-base.googleGemini",
+      "position": [1500, 200],
+      "credentials": { "googleGeminiApi": { "id": "YOUR_CREDS" } }
+    },
+    {
+      "parameters": {
+        "table": "digests",
+        "fields": {
+          "values": [
+            { "name": "title", "value": "={{ $node[\"RSS Read\"].json.title }}" },
+            { "name": "summary_text", "value": "={{ $json.text }}" },
+            { "name": "source_url", "value": "={{ $node[\"RSS Read\"].json.link }}" },
+            { "name": "subject_category", "value": "General" },
+            { "name": "factual_rating", "value": "passed" }
+          ]
+        }
+      },
+      "name": "Save to Supabase",
+      "type": "n8n-nodes-base.supabase",
+      "position": [1700, 200],
+      "credentials": { "supabaseApi": { "id": "YOUR_CREDS" } }
+    }
+  ],
+  "connections": {
+    "Every Hour": { "main": [[{ "node": "Read Feeds", "type": "main", "index": 0 }]] },
+    "Read Feeds": { "main": [[{ "node": "Parse JSON", "type": "main", "index": 0 }]] },
+    "Parse JSON": { "main": [[{ "node": "RSS Read", "type": "main", "index": 0 }]] },
+    "RSS Read": { "main": [[{ "node": "Check DB if exists", "type": "main", "index": 0 }]] },
+    "Check DB if exists": { "main": [[{ "node": "Is it New?", "type": "main", "index": 0 }]] },
+    "Is it New?": { "main": [[{ "node": "Scrape Full Content", "type": "main", "index": 0 }]] },
+    "Scrape Full Content": { "main": [[{ "node": "Gemini Summary", "type": "main", "index": 0 }]] },
+    "Gemini Summary": { "main": [[{ "node": "Save to Supabase", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}

@@ -1,0 +1,117 @@
+{
+  "name": "CurrentAI Production Ingest v1",
+  "nodes": [
+    {
+      "parameters": { "rule": { "interval": [{ "field": "hours" }] } },
+      "name": "Hourly Sync",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [40, 240]
+    },
+    {
+      "parameters": { "filePath": "/data/rss_feeds.json" },
+      "name": "Load Feed Config",
+      "type": "n8n-nodes-base.readBinaryFile",
+      "position": [240, 240]
+    },
+    {
+      "parameters": { "operation": "toText" },
+      "name": "JSON Parser",
+      "type": "n8n-nodes-base.moveBinaryData",
+      "position": [440, 240]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "feeds",
+        "options": {}
+      },
+      "name": "Split by Category",
+      "type": "n8n-nodes-base.itemLists",
+      "position": [640, 240]
+    },
+    {
+      "parameters": { "url": "={{ $json.url }}" },
+      "name": "Fetch RSS Feed",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "position": [840, 240]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "table": "digests",
+        "filters": {
+          "conditions": [
+            { "key": "source_url", "operator": "equal", "value": "={{ $json.link }}" }
+          ]
+        }
+      },
+      "name": "Duplicate Shield",
+      "type": "n8n-nodes-base.supabase",
+      "position": [1040, 240],
+      "credentials": { "supabaseApi": { "id": "YOUR_CREDS" } }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [{ "value1": "={{ $json.length }}", "operator": "isEmpty" }]
+        }
+      },
+      "name": "Is New?",
+      "type": "n8n-nodes-base.if",
+      "position": [1240, 240]
+    },
+    {
+      "parameters": {
+        "url": "http://scraper:8000/extract",
+        "method": "POST",
+        "bodyParameters": {
+          "parameters": [{ "name": "url", "value": "={{ $node[\"Fetch RSS Feed\"].json.link }}" }]
+        }
+      },
+      "name": "Deep Scrape Content",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1440, 140]
+    },
+    {
+      "parameters": {
+        "model": "gemini-1.5-pro",
+        "prompt": "=Analyze and summarize the following news article for CurrentAI. Focus on facts, remove institutional bias, and keep it strictly under 120 words.\n\nHeadline: {{ $node[\"Deep Scrape Content\"].json.title }}\nRaw Content: {{ $node[\"Deep Scrape Content\"].json.content }}",
+        "options": { "temperature": 0.25 }
+      },
+      "name": "Gemini Digest Editor",
+      "type": "n8n-nodes-base.googleGemini",
+      "position": [1640, 140],
+      "credentials": { "googleGeminiApi": { "id": "YOUR_CREDS" } }
+    },
+    {
+      "parameters": {
+        "table": "digests",
+        "fields": {
+          "values": [
+            { "name": "title", "value": "={{ $node[\"Deep Scrape Content\"].json.title || $node[\"Fetch RSS Feed\"].json.title }}" },
+            { "name": "summary_text", "value": "={{ $json.text }}" },
+            { "name": "source_url", "value": "={{ $node[\"Fetch RSS Feed\"].json.link }}" },
+            { "name": "source_name", "value": "={{ $node[\"Split by Category\"].json.name }}" },
+            { "name": "subject_category", "value": "={{ $node[\"Split by Category\"].json.category }}" },
+            { "name": "factual_rating", "value": "passed" },
+            { "name": "llm_model_used", "value": "gemini-1.5-pro" }
+          ]
+        }
+      },
+      "name": "Final Save to DB",
+      "type": "n8n-nodes-base.supabase",
+      "position": [1840, 140],
+      "credentials": { "supabaseApi": { "id": "YOUR_CREDS" } }
+    }
+  ],
+  "connections": {
+    "Hourly Sync": { "main": [[{ "node": "Load Feed Config", "type": "main", "index": 0 }]] },
+    "Load Feed Config": { "main": [[{ "node": "JSON Parser", "type": "main", "index": 0 }]] },
+    "JSON Parser": { "main": [[{ "node": "Split by Category", "type": "main", "index": 0 }]] },
+    "Split by Category": { "main": [[{ "node": "Fetch RSS Feed", "type": "main", "index": 0 }]] },
+    "Fetch RSS Feed": { "main": [[{ "node": "Duplicate Shield", "type": "main", "index": 0 }]] },
+    "Duplicate Shield": { "main": [[{ "node": "Is New?", "type": "main", "index": 0 }]] },
+    "Is New?": { "main": [[ { "node": "Deep Scrape Content", "type": "main", "index": 0 } ]] },
+    "Deep Scrape Content": { "main": [[ { "node": "Gemini Digest Editor", "type": "main", "index": 0 } ]] },
+    "Gemini Digest Editor": { "main": [[ { "node": "Final Save to DB", "type": "main", "index": 0 } ]] }
+  }
+}
