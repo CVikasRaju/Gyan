@@ -1,49 +1,70 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { Bookmark, BookmarkCheck } from 'lucide-react';
-import { useAuth } from '@/components/auth/AuthProvider';
-import { addBookmark, removeBookmark, getBookmarks } from '@/lib/bookmarks';
+import React, { useState, useEffect } from "react";
+import { Bookmark, BookmarkCheck, Loader2 } from "lucide-react";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { addBookmark, removeBookmark, getBookmarks } from "@/lib/bookmarks";
+import { useRouter } from "next/navigation";
 
 export function BookmarkButton({ digestId }: { digestId: string }) {
   const { user } = useAuth();
+  const router = useRouter();
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(false);
 
   // Check if already bookmarked on mount
   useEffect(() => {
     if (!user) return;
+    let cancelled = false;
     const fetchStatus = async () => {
       const list = await getBookmarks();
-      setSaved(list.some(b => b.id === digestId));
+      if (!cancelled) setSaved(list.some((b) => b.id === digestId));
     };
     fetchStatus();
+    return () => {
+      cancelled = true;
+    };
   }, [user, digestId]);
 
-  const toggle = async () => {
-    if (!user) return; // optionally trigger login
-    setLoading(true);
-    if (saved) {
-      await removeBookmark(digestId);
-    } else {
-      await addBookmark(digestId);
+  const toggle = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!user) {
+      router.push("/login");
+      return;
     }
-    setSaved(!saved);
-    setLoading(false);
+    setLoading(true);
+    try {
+      if (saved) {
+        await removeBookmark(digestId);
+      } else {
+        await addBookmark(digestId);
+      }
+      setSaved(!saved);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <button
-      onClick={e => { e.preventDefault(); e.stopPropagation(); toggle(); }}
+      onClick={toggle}
       disabled={loading}
-      className="text-outline hover:text-primary transition-colors p-1 -mr-1 -mt-1 rounded-full hover:bg-surface-container disabled:opacity-50"
+      aria-label={saved ? "Remove bookmark" : "Save bookmark"}
+      aria-pressed={saved}
+      className={`flex h-7 w-7 items-center justify-center rounded-md transition-colors ${
+        saved
+          ? "text-accent"
+          : "text-ink-muted hover:bg-raised hover:text-ink-secondary"
+      } disabled:opacity-50`}
     >
-      <span 
-        className="material-symbols-outlined text-[20px]" 
-        style={{ fontVariationSettings: saved ? "'FILL' 1" : "'FILL' 0" }}
-      >
-        bookmark
-      </span>
+      {loading ? (
+        <Loader2 size={15} className="animate-spin" />
+      ) : saved ? (
+        <BookmarkCheck size={15} strokeWidth={1.75} />
+      ) : (
+        <Bookmark size={15} strokeWidth={1.75} />
+      )}
     </button>
   );
 }

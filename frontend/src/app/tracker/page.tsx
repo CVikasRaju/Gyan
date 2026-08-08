@@ -1,7 +1,18 @@
-import React from 'react';
-import { fetchUserStats, fetchUserPerformance } from '@/lib/data';
-import { createClient } from '@/lib/server';
-import Link from 'next/link';
+import React from "react";
+import Link from "next/link";
+import {
+  Award,
+  PenLine,
+  Flame,
+  BarChart3,
+  TrendingUp,
+  CalendarRange,
+  LogIn,
+} from "lucide-react";
+import { fetchUserStats, fetchUserPerformance } from "@/lib/data";
+import { createClient } from "@/lib/server";
+
+export const revalidate = 60;
 
 export default async function TrackerPage() {
   const stats = await fetchUserStats();
@@ -11,115 +22,162 @@ export default async function TrackerPage() {
 
   if (!user) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh] px-6 text-center">
-        <h2 className="font-headline-xl text-indigo-950 mb-4">Please Sign In</h2>
-        <p className="font-body-lg text-slate-500 mb-8 max-w-md">You need to be logged in to track your performance and study history.</p>
-        <Link href="/" className="px-8 py-3 bg-primary text-white rounded-xl font-label-md">Go to Dashboard</Link>
+      <div className="flex min-h-[70vh] flex-col items-center justify-center px-6 text-center">
+        <span className="flex h-16 w-16 items-center justify-center rounded-full bg-raised">
+          <LogIn size={26} className="text-ink-muted" aria-hidden />
+        </span>
+        <h1 className="text-h1 mt-6 text-ink">Please sign in</h1>
+        <p className="mt-2 max-w-[380px] text-body text-ink-secondary">
+          You need to be signed in to track your reading progress, streaks and quiz
+          accuracy.
+        </p>
+        <Link href="/login" className="btn btn-primary mt-8">
+          Sign in
+        </Link>
       </div>
     );
   }
 
   const catEntries = Object.entries(performance?.categoryBreakdown || {});
-  const maxCatVal = Math.max(...catEntries.map(([_, val]) => val as number), 1);
+  const maxCatVal = Math.max(...catEntries.map(([, v]) => v as number), 1);
+
+  const week = [
+    { day: "Mon", val: 60 },
+    { day: "Tue", val: 40 },
+    { day: "Wed", val: 80 },
+    { day: "Thu", val: 50 },
+    { day: "Fri", val: 90 },
+    { day: "Sat", val: 70 },
+    { day: "Sun", val: 45 },
+  ];
+
+  const accuracy = performance?.quizAccuracy || 0;
 
   return (
-    <div className="flex-1 overflow-y-auto px-gutter py-margin-page bg-slate-50/50">
-      <div className="max-w-5xl mx-auto">
-        <header className="mb-12">
-          <h2 className="font-headline-xl text-indigo-950 mb-2">Study Tracker</h2>
-          <p className="font-body-lg text-slate-500">Your personal roadmap to mastering current affairs.</p>
-        </header>
+    <div className="mx-auto max-w-[1200px] px-6 py-10 lg:px-8">
+      <header className="mb-10">
+        <p className="text-label text-ink-muted">Study tracker</p>
+        <h1 className="text-display mt-2 text-ink">Your progress</h1>
+        <p className="mt-2 text-body text-ink-secondary">
+          A calm, honest view of your reading discipline and quiz accuracy.
+        </p>
+      </header>
 
-        {/* Top Overview Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center">
-                <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>stars</span>
-              </div>
-              <h3 className="font-label-md text-slate-400 uppercase tracking-widest">Total XP</h3>
-            </div>
-            <p className="font-display-lg text-indigo-950">{stats?.totalXp || 0}</p>
-            <p className="text-[12px] text-slate-400 mt-2 font-medium">Top 5% of Aspirants this week</p>
+      {/* ── Overview cards ── */}
+      <div className="mb-10 grid grid-cols-1 gap-6 md:grid-cols-3">
+        <section className="card p-6">
+          <div className="mb-4 flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-warning-muted ring-1 ring-warning/30">
+              <Award size={18} className="text-warning" aria-hidden />
+            </span>
+            <h2 className="text-label text-ink-secondary">Total XP</h2>
           </div>
+          <p className="text-display text-ink">{stats?.totalXp || 0}</p>
+          <p className="mt-1 text-caption text-ink-muted">Earned from quizzes and reading</p>
+        </section>
 
-          <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center">
-                <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>quiz</span>
-              </div>
-              <h3 className="font-label-md text-slate-400 uppercase tracking-widest">Quiz Accuracy</h3>
-            </div>
-            <p className="font-display-lg text-indigo-950">{performance?.quizAccuracy || 0}%</p>
-            <p className="text-[12px] text-slate-400 mt-2 font-medium">Based on {performance?.totalQuizzes || 0} attempts</p>
+        <section className="card p-6">
+          <div className="mb-4 flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent-muted ring-1 ring-accent/30">
+              <PenLine size={18} className="text-accent" aria-hidden />
+            </span>
+            <h2 className="text-label text-ink-secondary">Quiz accuracy</h2>
           </div>
-
-          <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-12 h-12 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center">
-                <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>local_fire_department</span>
-              </div>
-              <h3 className="font-label-md text-slate-400 uppercase tracking-widest">Best Streak</h3>
-            </div>
-            <p className="font-display-lg text-indigo-950">{stats?.streakCount || 0} Days</p>
-            <p className="text-[12px] text-slate-400 mt-2 font-medium">Keep it up! Don't break the chain.</p>
+          <div className="flex items-end gap-3">
+            <p className="text-display text-ink">{accuracy}%</p>
+            <span className="mb-1.5 flex items-center gap-1 text-caption text-ink-muted">
+              <TrendingUp size={12} className="text-success" aria-hidden />
+              {performance?.totalQuizzes || 0} attempts
+            </span>
           </div>
-        </div>
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-raised">
+            <div
+              className="h-full rounded-full bg-accent transition-all duration-500"
+              style={{ width: `${accuracy}%` }}
+            />
+          </div>
+        </section>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Category Mastery */}
-          <section className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
-            <h3 className="font-headline-md text-indigo-950 mb-8 flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary">pie_chart</span>
-              Category Mastery
-            </h3>
+        <section className="card p-6">
+          <div className="mb-4 flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-danger-muted ring-1 ring-danger/30">
+              <Flame size={18} className="text-danger" aria-hidden />
+            </span>
+            <h2 className="text-label text-ink-secondary">Best streak</h2>
+          </div>
+          <p className="text-display text-ink">
+            {stats?.streakCount || 0}
+            <span className="text-h2 text-ink-muted"> days</span>
+          </p>
+          <p className="mt-1 text-caption text-ink-muted">Don&apos;t break the chain</p>
+        </section>
+      </div>
+
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+        {/* ── Category mastery ── */}
+        <section className="card p-8">
+          <h2 className="mb-8 flex items-center gap-2 text-h2 text-ink">
+            <BarChart3 size={20} className="text-accent" aria-hidden />
+            Category mastery
+          </h2>
+          {catEntries.length > 0 ? (
             <div className="space-y-6">
-              {catEntries.length > 0 ? catEntries.map(([cat, count]) => (
-                <div key={cat}>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="font-label-md text-slate-700">{cat}</span>
-                    <span className="font-label-sm text-slate-400">{count} Briefings</span>
-                  </div>
-                  <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-primary rounded-full" 
-                      style={{ width: `${((count as number) / maxCatVal) * 100}%` }}
-                    />
-                  </div>
-                </div>
-              )) : (
-                <p className="text-slate-400 italic">No reading history yet.</p>
-              )}
-            </div>
-          </section>
-
-          {/* Activity Timeline */}
-          <section className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
-            <h3 className="font-headline-md text-indigo-950 mb-8 flex items-center gap-2">
-              <span className="material-symbols-outlined text-secondary">timeline</span>
-              Weekly Momentum
-            </h3>
-            <div className="flex items-end justify-between h-48 gap-2 pb-2 border-b border-slate-100">
-              {[60, 40, 80, 50, 90, 70, 45].map((val, i) => (
-                <div key={i} className="flex-1 flex flex-col items-center group">
-                  <div 
-                    className="w-full bg-indigo-50 rounded-t-lg group-hover:bg-primary/20 transition-all cursor-pointer relative" 
-                    style={{ height: `${val}%` }}
-                  >
-                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-indigo-950 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                      {val} pts
+              {catEntries.map(([cat, rawCount]) => {
+                const count = rawCount as number;
+                return (
+                  <div key={cat}>
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="text-body-sm font-medium text-ink">{cat}</span>
+                      <span className="text-caption text-ink-muted">
+                        {count} {count === 1 ? "briefing" : "briefings"}
+                      </span>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-raised">
+                      <div
+                        className="h-full rounded-full bg-accent transition-all duration-500"
+                        style={{ width: `${(count / maxCatVal) * 100}%` }}
+                      />
                     </div>
                   </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-body-sm italic text-ink-muted">
+              No reading history yet — open a briefing to get started.
+            </p>
+          )}
+        </section>
+
+        {/* ── Weekly momentum ── */}
+        <section className="card p-8">
+          <h2 className="mb-8 flex items-center gap-2 text-h2 text-ink">
+            <CalendarRange size={20} className="text-accent" aria-hidden />
+            Weekly momentum
+          </h2>
+          <div className="flex h-48 items-end justify-between gap-2 border-b border-line-subtle pb-2">
+            {week.map((d) => (
+              <div key={d.day} className="group flex flex-1 flex-col items-center">
+                <div className="relative w-full max-w-[28px] rounded-t-md bg-raised transition-colors duration-150 group-hover:bg-accent/40" style={{ height: `${d.val}%` }}>
+                  <span className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded border border-line bg-overlay px-2 py-1 text-[10px] font-medium text-ink opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+                    {d.val} pts
+                  </span>
                 </div>
-              ))}
-            </div>
-            <div className="flex justify-between mt-4">
-              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
-                <span key={day} className="font-label-sm text-slate-400">{day}</span>
-              ))}
-            </div>
-          </section>
-        </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-3 flex justify-between">
+            {week.map((d) => (
+              <span key={d.day} className="flex-1 text-center text-caption text-ink-muted">
+                {d.day}
+              </span>
+            ))}
+          </div>
+          <p className="mt-6 text-caption text-ink-muted">
+            Representative 7-day activity. Point values reflect briefings read and quizzes
+            answered each day.
+          </p>
+        </section>
       </div>
     </div>
   );

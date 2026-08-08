@@ -7,6 +7,7 @@
 ---------------------------------------------------------
 CREATE TABLE public.digests (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  title text,
   summary_text text, -- Nullable because it might be flagged before parsing
   subject_category text,
   source_url text NOT NULL UNIQUE,
@@ -167,5 +168,42 @@ BEGIN
   WHERE user_id = user_id_param;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+---------------------------------------------------------
+-- 9. Admin / Editor helpers (frontend editorial dashboard)
+---------------------------------------------------------
+-- True when the current user is a Gyan editor or admin.
+-- Empty search_path + fully-qualified names prevent search-path hijacking.
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM auth.users
+    WHERE id = auth.uid()
+      AND (
+        raw_user_meta_data ->> 'role' = 'admin'
+        OR email LIKE '%@gyan.ai'
+      )
+  );
+$$;
+
+-- Editors can read every digest, including flagged / quarantined items.
+CREATE POLICY "Admins can read all digests" ON public.digests
+  FOR SELECT USING (public.is_admin());
+
+-- Editors can update digest status (approve / flag / quarantine).
+CREATE POLICY "Admins can update digests" ON public.digests
+  FOR UPDATE USING (public.is_admin());
+
+-- Readers can initialise their own stats row on first visit.
+CREATE POLICY "Users can insert their own stats" ON public.user_stats
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+
 
 

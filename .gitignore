@@ -1,51 +1,43 @@
-# Next.js
+# ── Environment Variables (SENSITIVE — never commit) ────────────────
+.env
+.env.*
+!.env.example
+!.env*.example
+*.env
+*.env.local
+backend/n8n/.env
+
+# ── Next.js ─────────────────────────────────────────────────────────
 .next/
 out/
 build/
+*.tsbuildinfo
+next-env.d.ts
 
-# Node.js
+# ── Node.js ─────────────────────────────────────────────────────────
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# Environment Variables (SENSITIVE)
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-.env*.local
-backend/n8n/.env
-
-# Python
+# ── Python ──────────────────────────────────────────────────────────
 __pycache__/
 *.py[cod]
 *$py.class
 .venv/
 venv/
 env/
-.env
-build/
-develop-eggs/
 dist/
-downloads/
-eggs/
-.eggs/
-# Python virtualenv libraries
-venv/lib/
-venv/lib64/
-env/lib/
-env/lib64/
-.venv/lib/
-.venv/lib64/
-
 *.egg-info/
 .installed.cfg
 *.egg
 
-# Secrets & Keys
+# ── AI agent tooling (local only) ───────────────────────────────────
+.agents/
+skills-lock.json
+
+# ── Secrets & Keys ──────────────────────────────────────────────────
 *.pem
 *.key
 keys.json
@@ -53,24 +45,18 @@ credentials/
 google-services.json
 .supabase/
 
-# OS Specific
+# ── Build orchestration artifacts ───────────────────────────────────
+build_queue.json
+
+# ── OS / IDE ────────────────────────────────────────────────────────
 .DS_Store
-.DS_Store?
-._*
 Thumbs.db
 desktop.ini
-
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# IDE Specific
 .vscode/
 .idea/
 *.swp
 *.swo
-.project
-.settings/
+
+# ── Logs ────────────────────────────────────────────────────────────
+logs
+*.log

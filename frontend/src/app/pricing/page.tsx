@@ -1,106 +1,219 @@
-import React from 'react';
-import Link from 'next/link';
+import React from "react";
+import Link from "next/link";
+import {
+  ShieldCheck,
+  Ban,
+  FileText,
+  Check,
+  X,
+  Sparkles,
+  ArrowRight,
+  Zap,
+} from "lucide-react";
+import { Faq } from "@/components/marketing/Faq";
+
+const TIERS = [
+  {
+    name: "Basic",
+    price: 15,
+    tagline: "For readers who want a clean, reliable daily briefing.",
+    features: [
+      "Full daily digest access",
+      "Source attribution on every item",
+      "Ad-free reading experience",
+      "AI summaries (bulk models)",
+      "6 category subscriptions",
+      "Daily quiz + reading streak",
+    ],
+    cta: "Start with Basic",
+    popular: false,
+  },
+  {
+    name: "Pro",
+    price: 30,
+    tagline: "For professionals who need deeper, premium analysis.",
+    features: [
+      "Everything in Basic",
+      "Flagship LLM analysis (Claude / GPT)",
+      "Advanced geopolitical deep dives",
+      "Downloadable PDF briefings",
+      "Early access to new categories",
+      "Priority editorial review",
+    ],
+    cta: "Go Pro",
+    popular: true,
+  },
+];
+
+const COMPARISON: { feature: string; basic: boolean | string; pro: boolean | string }[] = [
+  { feature: "Daily fact-checked digests", basic: true, pro: true },
+  { feature: "Source attribution", basic: true, pro: true },
+  { feature: "Ad-free, tracker-free reading", basic: true, pro: true },
+  { feature: "Daily quiz & streaks", basic: true, pro: true },
+  { feature: "Categories included", basic: "6", pro: "All" },
+  { feature: "Flagship model analysis", basic: false, pro: true },
+  { feature: "PDF briefings", basic: false, pro: true },
+  { feature: "Deep-dive archives", basic: false, pro: true },
+];
+
+function Cell({ value }: { value: boolean | string }) {
+  if (value === true) {
+    return (
+      <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-success-muted">
+        <Check size={13} className="text-success" strokeWidth={2.5} />
+      </span>
+    );
+  }
+  if (value === false) {
+    return (
+      <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-raised">
+        <X size={13} className="text-ink-muted" strokeWidth={2.5} />
+      </span>
+    );
+  }
+  return <span className="text-body-sm font-semibold text-ink">{value}</span>;
+}
 
 export default function PricingPage() {
-  const tiers = [
-    {
-      name: 'Basic',
-      price: '$15',
-      description: 'Perfect for casual readers who want ad-free summaries.',
-      features: [
-        'Full Daily Digest Access',
-        'Source Attribution',
-        'Ad-Free Experience',
-        'AI Summarization (Basic Models)',
-        '3 Category Subscriptions'
-      ],
-      cta: 'Start Reading',
-      popular: false
-    },
-    {
-      name: 'Pro',
-      price: '$30',
-      description: 'For professionals needing deep geopolitical analysis.',
-      features: [
-        'Everything in Basic',
-        'Premium LLM Analysis (Claude/GPT-4)',
-        'Advanced Geopolitical Insights',
-        'Full Category Access',
-        'Downloadable PDF Briefings',
-        'Early Access to Deep Dives'
-      ],
-      cta: 'Get Pro Access',
-      popular: true
-    }
-  ];
-
   return (
-    <div className="flex-1 overflow-y-auto px-gutter py-24 bg-slate-50/30">
-      <div className="max-w-5xl mx-auto text-center mb-20">
-        <h1 className="font-display-lg text-indigo-950 mb-6 tracking-tight">Invest in Deep Knowledge</h1>
-        <p className="font-body-xl text-slate-500 max-w-2xl mx-auto">
-          No ads. No misinformation. Just fact-checked, source-attributed current affairs powered by state-of-the-art AI.
+    <div className="mx-auto max-w-[1200px] px-6 py-16 lg:px-8">
+      {/* ── Hero ── */}
+      <header className="mx-auto mb-16 max-w-[720px] text-center">
+        <p className="text-label text-accent">Simple, honest pricing</p>
+        <h1 className="text-display mt-3 text-ink">
+          Invest in deep knowledge
+        </h1>
+        <p className="mt-4 text-body-lg text-ink-secondary">
+          No ads. No misinformation. Just fact-checked, source-attributed current affairs —
+          powered by AI, guarded by editors.
         </p>
-      </div>
 
-      <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
-        {tiers.map((tier) => (
-          <div 
-            key={tier.name} 
-            className={`flex flex-col p-8 lg:p-12 rounded-[40px] bg-white border transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 ${
-              tier.popular ? 'border-primary shadow-xl ring-2 ring-primary/20 relative' : 'border-slate-100 shadow-sm'
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          {[
+            { icon: ShieldCheck, label: "Fact-checked" },
+            { icon: Ban, label: "No ads" },
+            { icon: FileText, label: "Source-attributed" },
+          ].map(({ icon: Icon, label }) => (
+            <span
+              key={label}
+              className="flex items-center gap-2 rounded-full border border-line bg-surface px-4 py-2 text-body-sm font-medium text-ink-secondary"
+            >
+              <Icon size={15} className="text-success" aria-hidden />
+              {label}
+            </span>
+          ))}
+        </div>
+      </header>
+
+      {/* ── Pricing cards ── */}
+      <div className="mx-auto mb-20 grid max-w-[880px] grid-cols-1 gap-6 md:grid-cols-2">
+        {TIERS.map((tier) => (
+          <div
+            key={tier.name}
+            className={`relative flex flex-col rounded-2xl p-8 ${
+              tier.popular
+                ? "border border-accent bg-accent-muted/30 glow-accent"
+                : "border border-line bg-surface"
             }`}
           >
             {tier.popular && (
-              <span className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-primary text-white font-label-sm px-4 py-1.5 rounded-full uppercase tracking-widest shadow-md">
-                Recommended
+              <span className="absolute -top-3 left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-accent px-4 py-1.5 text-caption font-bold text-ink-inverse shadow-lg">
+                <Sparkles size={12} aria-hidden />
+                Most popular
               </span>
             )}
-            
-            <div className="mb-10 text-center">
-              <h3 className="font-headline-md text-indigo-950 mb-4">{tier.name}</h3>
-              <div className="flex items-end justify-center gap-1 mb-4">
-                <span className="font-display-lg text-indigo-950">{tier.price}</span>
-                <span className="font-body-lg text-slate-400 mb-2">/ month</span>
+
+            <div className="mb-8">
+              <h2 className="text-h1 text-ink">{tier.name}</h2>
+              <p className="mt-2 text-body-sm text-ink-secondary">{tier.tagline}</p>
+              <div className="mt-6 flex items-end gap-1">
+                <span className="text-[40px] font-bold leading-none text-ink">${tier.price}</span>
+                <span className="mb-1.5 text-body-sm text-ink-muted">/ month</span>
               </div>
-              <p className="font-body-md text-slate-500 leading-relaxed">
-                {tier.description}
-              </p>
             </div>
 
-            <ul className="space-y-4 mb-12 flex-1">
-              {tier.features.map((feature) => (
-                <li key={feature} className="flex items-center gap-3 text-slate-600 font-body-md">
-                  <span className="material-symbols-outlined text-green-500 text-[20px]">check_circle</span>
-                  {feature}
+            <ul className="mb-10 flex-1 space-y-3">
+              {tier.features.map((f) => (
+                <li key={f} className="flex items-start gap-3 text-body-sm text-ink-secondary">
+                  <Check size={15} className="mt-0.5 shrink-0 text-accent" strokeWidth={2.5} />
+                  {f}
                 </li>
               ))}
             </ul>
 
-            <Link 
-              href="/account"
-              className={`w-full py-4 rounded-2xl font-label-md text-center transition-all shadow-md ${
-                tier.popular 
-                  ? 'bg-primary text-white hover:bg-primary-dark' 
-                  : 'bg-indigo-950 text-white hover:bg-indigo-900'
-              }`}
+            <Link
+              href="/login"
+              className={`btn w-full ${tier.popular ? "btn-primary" : "btn-secondary"}`}
             >
               {tier.cta}
+              <ArrowRight size={16} strokeWidth={2} />
             </Link>
           </div>
         ))}
       </div>
 
-      <div className="mt-24 text-center">
-        <p className="font-label-sm text-slate-400 uppercase tracking-widest mb-4">Trusted by over 10,000+ Aspirants</p>
-        <div className="flex justify-center gap-8 opacity-30 grayscale hover:grayscale-0 transition-all duration-700">
-          {/* Logo Placeholders */}
-          <span className="material-symbols-outlined text-[48px]">school</span>
-          <span className="material-symbols-outlined text-[48px]">account_balance</span>
-          <span className="material-symbols-outlined text-[48px]">business_center</span>
-          <span className="material-symbols-outlined text-[48px]">biotech</span>
+      {/* ── Comparison table ── */}
+      <section className="mb-20">
+        <h2 className="mb-8 text-center text-h1 text-ink">Compare plans</h2>
+        <div className="mx-auto max-w-[680px] overflow-hidden rounded-xl border border-line">
+          <table className="w-full border-collapse text-left">
+            <thead>
+              <tr className="border-b border-line bg-surface">
+                <th className="px-6 py-4 text-label text-ink-muted">Feature</th>
+                <th className="px-6 py-4 text-center text-label text-ink-secondary">Basic</th>
+                <th className="px-6 py-4 text-center text-label text-accent">Pro</th>
+              </tr>
+            </thead>
+            <tbody>
+              {COMPARISON.map((row, i) => (
+                <tr
+                  key={row.feature}
+                  className={`border-b border-line-subtle last:border-0 ${
+                    i % 2 === 0 ? "bg-canvas/40" : "bg-surface"
+                  }`}
+                >
+                  <td className="px-6 py-3.5 text-body-sm text-ink-secondary">{row.feature}</td>
+                  <td className="px-6 py-3.5 text-center">
+                    <Cell value={row.basic} />
+                  </td>
+                  <td className="px-6 py-3.5 text-center">
+                    <Cell value={row.pro} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      </div>
+      </section>
+
+      {/* ── FAQ ── */}
+      <section className="mb-20">
+        <h2 className="mb-8 text-center text-h1 text-ink">Frequently asked</h2>
+        <Faq />
+      </section>
+
+      {/* ── CTA strip ── */}
+      <section className="relative overflow-hidden rounded-2xl border border-accent/40 bg-gradient-to-br from-accent-muted via-surface to-surface p-12 text-center">
+        <Zap
+          size={140}
+          strokeWidth={1}
+          aria-hidden
+          className="pointer-events-none absolute -right-10 -top-10 text-accent/10"
+        />
+        <h2 className="text-h1 text-ink">Start your free trial</h2>
+        <p className="mx-auto mt-3 max-w-[440px] text-body text-ink-secondary">
+          Two weeks of Pro, free. No credit card required. Cancel anytime.
+        </p>
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <Link href="/login" className="btn btn-primary">
+            Start free trial
+            <ArrowRight size={16} strokeWidth={2} />
+          </Link>
+          <Link href="/" className="btn btn-ghost">
+            Read today&apos;s digest first
+          </Link>
+        </div>
+      </section>
     </div>
   );
 }

@@ -1,18 +1,39 @@
 import type { Metadata } from "next";
-import { Inter, Plus_Jakarta_Sans, Poppins } from "next/font/google";
+import Script from "next/script";
+import { Inter, Lora, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
-const plusJakartaSans = Plus_Jakarta_Sans({ subsets: ["latin"] });
-const poppins = Poppins({ weight: ['400', '500', '600', '700'], subsets: ["latin"] });
+import { AuthProvider } from "@/components/auth/AuthProvider";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { NavigationLayout } from "@/components/layout/NavigationLayout";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+});
+
+const lora = Lora({
+  subsets: ["latin"],
+  variable: "--font-lora",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains-mono",
+});
 
 export const metadata: Metadata = {
-  title: "Gyan",
-  description: "Your personalized current affairs digest.",
+  title: "Gyan — Fact-checked. Source-attributed. Ad-free.",
+  description:
+    "An AI-powered daily current affairs digest. Fact-checked summaries, full source attribution, zero ads.",
+  keywords: ["current affairs", "news digest", "fact-checked", "AI summaries"],
 };
 
-import { AuthProvider } from '@/components/auth/AuthProvider';
-import { NavigationLayout } from '@/components/layout/NavigationLayout';
+/**
+ * Applies the saved/system theme before first paint to avoid a flash of
+ * the wrong theme. Keep in sync with ThemeProvider.getInitialTheme().
+ */
+const themeInitScript = `(function(){try{var t=localStorage.getItem('gyan-theme');if(t!=='light'&&t!=='dark'){t=window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';}document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();`;
 
 export default function RootLayout({
   children,
@@ -20,19 +41,26 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" data-theme="dark" suppressHydrationWarning>
       <head>
-        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL,GRAD,opsz@400,0..1,0,24&display=swap" rel="stylesheet" />
+        {/* beforeInteractive inlines this in the SSR <head> — avoids FOUC without
+            rendering a raw <script> through React (which never executes client-side). */}
+        <Script
+          id="theme-init"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: themeInitScript }}
+        />
       </head>
-      <body className="min-h-screen bg-background text-on-background font-body-md antialiased overflow-hidden flex" suppressHydrationWarning>
-        <AuthProvider>
-          <NavigationLayout>
-            {children}
-          </NavigationLayout>
-        </AuthProvider>
+      <body
+        className={`${inter.variable} ${lora.variable} ${jetbrainsMono.variable} min-h-screen bg-canvas text-ink antialiased`}
+        suppressHydrationWarning
+      >
+        <ThemeProvider>
+          <AuthProvider>
+            <NavigationLayout>{children}</NavigationLayout>
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
 }
-
-

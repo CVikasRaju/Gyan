@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# GYAN — Frontend
 
-## Getting Started
+Next.js 16 (App Router) + Tailwind CSS v4 + Supabase. Implements the dark editorial design system in [`docs/CurrentAI — Design System.md`](../docs/CurrentAI%20—%20Design%20System.md).
 
-First, run the development server:
+## Scripts
+
+| Command | Description |
+|---|---|
+| `npm run dev` | Start the dev server on <http://localhost:3000> |
+| `npm run build` | Production build |
+| `npm run start` | Serve the production build |
+| `npm run lint` | ESLint |
+| `npx tsc --noEmit` | Typecheck |
+| `npm run check:env` | Validate required env vars are set |
+
+## Environment
+
+Copy `.env.example` to `.env.local` and fill in your Supabase project values:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<anon-public-key>
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+> `NEXT_PUBLIC_*` values are inlined into the client bundle at build time, so they must be referenced statically (`process.env.NEXT_PUBLIC_X`) — see `src/lib/env.ts`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Pages
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Route | Description |
+|---|---|
+| `/` | Daily Digest (hero, filter tabs, featured card, grid) |
+| `/article/[id]` | Full briefing with reading progress + related items |
+| `/categories` / `/category/[category]` | Category browsing |
+| `/quiz` | Daily quiz |
+| `/tracker` | Reading streak, XP and goals |
+| `/bookmarks` | Saved briefings |
+| `/admin` | Editorial dashboard (admins only) |
+| `/pricing` · `/login` · `/account` · `/help` | Marketing & account |
+| `/api/health` | Supabase connectivity check |
 
-## Learn More
+## Structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/
+├── app/          # App Router pages + API routes
+├── components/   # Navbar, digest cards, auth, admin, marketing
+└── lib/          # Supabase clients (server/client), data layer, env
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+See the [root README](../README.md) for full setup, schema and seeding instructions.

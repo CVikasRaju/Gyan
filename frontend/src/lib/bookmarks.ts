@@ -1,18 +1,31 @@
-import { DigestItem } from '@/lib/data';
+import type { DigestItem } from "@/lib/digests";
+
+type BookmarkRow = {
+  digests: {
+    id: string;
+    title: string;
+    summary_text: string;
+    source_url: string;
+    source_name: string;
+    subject_category: string;
+    original_published_at: string;
+    factual_rating: DigestItem["qaStatus"];
+  };
+};
 
 export async function getBookmarks(): Promise<DigestItem[]> {
-  const res = await fetch('/api/bookmarks', {
-    method: 'GET',
-    credentials: 'include',
-    cache: 'no-store',
+  const res = await fetch("/api/bookmarks", {
+    method: "GET",
+    credentials: "include",
+    cache: "no-store",
   });
   if (!res.ok) {
-    console.error('Failed to fetch bookmarks');
+    console.error("Failed to fetch bookmarks");
     return [];
   }
-  const data = await res.json();
+  const data = (await res.json()) as BookmarkRow[];
   // API returns array of rows with digests nested
-  return data.map((row: any) => ({
+  return data.map((row) => ({
     id: row.digests.id,
     title: row.digests.title,
     summary: row.digests.summary_text,
@@ -25,19 +38,19 @@ export async function getBookmarks(): Promise<DigestItem[]> {
 }
 
 export async function addBookmark(digestId: string): Promise<void> {
-  await fetch('/api/bookmarks', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
+  await fetch("/api/bookmarks", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify({ digest_id: digestId }),
   });
 }
 
 export async function removeBookmark(digestId: string): Promise<void> {
-  await fetch('/api/bookmarks', {
-    method: 'DELETE',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
+  await fetch("/api/bookmarks", {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify({ digest_id: digestId }),
   });
 }

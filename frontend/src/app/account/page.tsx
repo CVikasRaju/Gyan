@@ -1,139 +1,158 @@
 "use client";
 
-import React from 'react';
-import { useAuth } from '@/components/auth/AuthProvider';
-import { useRouter } from 'next/navigation';
+import React from "react";
+import { useAuth } from "@/components/auth/AuthProvider";
+import Link from "next/link";
+import {
+  BadgeCheck,
+  CreditCard,
+  LogOut,
+  KeyRound,
+  Mail,
+  Phone,
+  UserRound,
+  CalendarDays,
+  ArrowRight,
+  ShieldCheck,
+} from "lucide-react";
 
 export default function AccountPage() {
   const { user, signOut, loading } = useAuth();
-  const router = useRouter();
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="flex min-h-[70vh] items-center justify-center">
+        <div className="skeleton h-10 w-10 rounded-full" />
       </div>
     );
   }
 
   if (!user) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center h-full px-6 text-center">
-        <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-6">
-          <span className="material-symbols-outlined text-[40px] text-slate-400">lock</span>
-        </div>
-        <h2 className="font-headline-xl text-on-background mb-4">Please Sign In</h2>
-        <p className="font-body-lg text-on-surface-variant mb-8 max-w-md">
-          You need to be logged in to view your account details and manage your subscription.
+      <div className="flex min-h-[70vh] flex-col items-center justify-center px-6 text-center">
+        <span className="flex h-16 w-16 items-center justify-center rounded-full bg-raised">
+          <UserRound size={28} className="text-ink-muted" aria-hidden />
+        </span>
+        <h1 className="text-h1 mt-6 text-ink">Please sign in</h1>
+        <p className="mt-2 max-w-[380px] text-body text-ink-secondary">
+          You need to be signed in to view your account details and manage your plan.
         </p>
-        <button 
-          onClick={() => router.push('/')}
-          className="px-8 py-3 bg-primary text-white rounded-xl font-label-md hover:bg-primary/90 transition-all shadow-sm"
-        >
-          Go to Dashboard
-        </button>
+        <Link href="/login" className="btn btn-primary mt-8">
+          Go to sign in
+        </Link>
       </div>
     );
   }
 
-  const userDetails = {
-    name: user.user_metadata?.full_name || 'Not provided',
-    email: user.email || 'Not provided',
-    phone: user.phone || 'Not provided',
-    plan: user.user_metadata?.plan || 'Free Tier',
-    joined: new Date(user.created_at).toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' })
-  };
+  const name = user.user_metadata?.full_name || "Not provided";
+  const plan = user.user_metadata?.plan || "Basic";
+  const joined = new Date(user.created_at).toLocaleDateString([], {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+
+  const details = [
+    { icon: UserRound, label: "Full name", value: name },
+    { icon: Mail, label: "Email address", value: user.email || "Not provided" },
+    { icon: Phone, label: "Phone number", value: user.phone || "Not provided" },
+    { icon: CalendarDays, label: "Member since", value: joined },
+  ];
 
   return (
-    <div className="flex-1 overflow-y-auto px-gutter py-margin-page bg-slate-50/50">
-      <div className="max-w-2xl mx-auto">
-        <header className="mb-stack-lg">
-          <h2 className="font-headline-xl text-on-background mb-2">My Account</h2>
-          <p className="font-body-lg text-on-surface-variant">Manage your personal information and subscription plan.</p>
-        </header>
+    <div className="mx-auto max-w-[760px] px-6 py-10">
+      <header className="mb-8">
+        <p className="text-label text-ink-muted">My account</p>
+        <h1 className="text-display mt-2 text-ink">Account settings</h1>
+        <p className="mt-2 text-body text-ink-secondary">
+          Manage your personal information and subscription plan.
+        </p>
+      </header>
 
-        <div className="space-y-stack-md">
-          {/* Personal Info Card */}
-          <section className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-              <h3 className="font-label-md text-primary uppercase tracking-wider">Personal Information</h3>
-              <span className="material-symbols-outlined text-slate-400">badge</span>
-            </div>
-            <div className="p-6 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="space-y-6">
+        {/* Profile summary */}
+        <section className="card flex flex-col items-start gap-5 p-6 sm:flex-row sm:items-center">
+          <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-accent-muted text-h2 font-bold text-accent ring-1 ring-accent/30">
+            {(name[0] || user.email?.[0] || "U").toUpperCase()}
+          </span>
+          <div className="min-w-0">
+            <p className="text-h2 text-ink">{name}</p>
+            <p className="text-body-sm text-ink-secondary">{user.email}</p>
+          </div>
+          <span className="chip chip-general sm:ml-auto">Reader</span>
+        </section>
+
+        {/* Personal info */}
+        <section className="card overflow-hidden">
+          <div className="flex items-center justify-between border-b border-line-subtle px-6 py-4">
+            <h2 className="text-label text-ink-secondary">Personal information</h2>
+            <BadgeCheck size={16} className="text-ink-muted" aria-hidden />
+          </div>
+          <div className="grid grid-cols-1 gap-6 p-6 sm:grid-cols-2">
+            {details.map(({ icon: Icon, label, value }) => (
+              <div key={label}>
+                <p className="mb-1 flex items-center gap-1.5 text-caption font-medium text-ink-muted">
+                  <Icon size={12} aria-hidden />
+                  {label}
+                </p>
+                <p className="text-body font-semibold text-ink">{value}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Subscription */}
+        <section className="card overflow-hidden">
+          <div className="flex items-center justify-between border-b border-line-subtle px-6 py-4">
+            <h2 className="text-label text-ink-secondary">Subscription plan</h2>
+            <CreditCard size={16} className="text-ink-muted" aria-hidden />
+          </div>
+          <div className="p-6">
+            <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-accent/30 bg-accent-muted/40 p-5">
+              <div className="flex items-center gap-4">
+                <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-accent/20 ring-1 ring-accent/40">
+                  <ShieldCheck size={20} className="text-accent" aria-hidden />
+                </span>
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Full Name</label>
-                  <p className="font-body-lg text-indigo-950 font-semibold">{userDetails.name}</p>
-                </div>
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Email Address</label>
-                  <p className="font-body-lg text-indigo-950 font-semibold">{userDetails.email}</p>
-                </div>
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Phone Number</label>
-                  <p className="font-body-lg text-indigo-950 font-semibold">{userDetails.phone}</p>
-                </div>
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Member Since</label>
-                  <p className="font-body-lg text-indigo-950 font-semibold">{userDetails.joined}</p>
+                  <p className="text-h3 text-ink">{plan} plan</p>
+                  <p className="text-caption text-ink-muted">Billed monthly · Active</p>
                 </div>
               </div>
+              <Link href="/pricing" className="btn btn-secondary h-10 px-4 py-0 text-[13px]">
+                Upgrade plan
+                <ArrowRight size={14} strokeWidth={2} />
+              </Link>
             </div>
-          </section>
+          </div>
+        </section>
 
-          {/* Subscription Card */}
-          <section className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-              <h3 className="font-label-md text-primary uppercase tracking-wider">Subscription Plan</h3>
-              <span className="material-symbols-outlined text-slate-400">payments</span>
-            </div>
-            <div className="p-6">
-              <div className="flex items-center justify-between p-4 rounded-xl bg-primary-container/10 border border-primary-container/20">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-lg bg-primary-container flex items-center justify-center text-primary">
-                    <span className="material-symbols-outlined text-[28px]">verified_user</span>
-                  </div>
-                  <div>
-                    <p className="font-label-md text-primary">{userDetails.plan}</p>
-                    <p className="text-[12px] text-slate-500">Billed monthly • Active</p>
-                  </div>
-                </div>
-                <button className="px-4 py-2 text-primary font-label-md hover:bg-primary-container/20 rounded-lg transition-colors">
-                  Upgrade Plan
-                </button>
+        {/* Security */}
+        <section className="card overflow-hidden">
+          <div className="flex items-center justify-between border-b border-line-subtle px-6 py-4">
+            <h2 className="text-label text-ink-secondary">Security & actions</h2>
+            <KeyRound size={16} className="text-ink-muted" aria-hidden />
+          </div>
+          <div className="space-y-3 p-6">
+            <div className="flex items-center justify-between rounded-lg border border-line px-4 py-3.5">
+              <div className="flex items-center gap-3">
+                <KeyRound size={16} className="text-ink-muted" aria-hidden />
+                <span className="text-body font-medium text-ink">Change password</span>
               </div>
+              <span className="text-caption text-ink-muted">Use the password reset email</span>
             </div>
-          </section>
+            <button
+              onClick={() => signOut()}
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-danger/40 bg-danger-muted px-4 py-3.5 text-body font-semibold text-danger transition-colors hover:bg-danger/20"
+            >
+              <LogOut size={16} strokeWidth={2} />
+              Log out of all devices
+            </button>
+          </div>
+        </section>
 
-          {/* Security & Settings Card */}
-          <section className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-              <h3 className="font-label-md text-primary uppercase tracking-wider">Security & Actions</h3>
-              <span className="material-symbols-outlined text-slate-400">settings</span>
-            </div>
-            <div className="p-6 flex flex-col gap-3">
-              <button className="w-full py-3 px-4 rounded-xl border border-slate-200 flex items-center justify-between hover:bg-slate-50 transition-colors group">
-                <div className="flex items-center gap-3">
-                  <span className="material-symbols-outlined text-slate-400">lock_reset</span>
-                  <span className="font-body-md text-indigo-950">Change Password</span>
-                </div>
-                <span className="material-symbols-outlined text-slate-300 group-hover:translate-x-1 transition-transform">chevron_right</span>
-              </button>
-              
-              <button 
-                onClick={() => signOut()}
-                className="w-full py-4 px-4 rounded-xl bg-red-50 text-red-600 flex items-center justify-center gap-2 hover:bg-red-100 transition-colors font-label-md shadow-sm mt-4"
-              >
-                <span className="material-symbols-outlined">logout</span>
-                Log Out of All Devices
-              </button>
-            </div>
-          </section>
-
-          <p className="text-center text-[12px] text-slate-400 py-6 font-medium uppercase tracking-widest">
-            GYAN • Privacy Policy • Terms of Service
-          </p>
-        </div>
+        <p className="py-4 text-center text-caption text-ink-muted">
+          Gyan · Privacy Policy · Terms of Service
+        </p>
       </div>
     </div>
   );

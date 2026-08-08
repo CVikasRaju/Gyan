@@ -1,45 +1,50 @@
 "use client";
 
-import React from 'react';
-import type { DigestItem } from '@/lib/data';
-import Link from 'next/link';
-import { BookmarkButton } from '@/components/feed/BookmarkButton';
+import React from "react";
+import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
+import type { DigestItem } from "@/lib/digests";
+import { CategoryChip, QaBadge } from "@/components/ui/Badges";
+import { BookmarkButton } from "@/components/feed/BookmarkButton";
 
 export function DigestCard({ item }: { item: DigestItem }) {
-  const formattedTime = new Date(item.pubDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const date = new Date(item.pubDate);
+  const time = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
   return (
-    <article className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/30 p-5 flex flex-col gap-4 group cursor-pointer hover:shadow-md transition-shadow">
-      {/* Top row: category + bookmark */}
-      <div className="flex justify-between items-start">
-        <span className="text-secondary font-label-sm uppercase tracking-wider">
-          {item.source || 'News'}
-        </span>
-        <BookmarkButton digestId={item.id} />
+    <article className="card card-hover group flex flex-col p-6">
+      {/* Top metadata row */}
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <CategoryChip category={item.category} />
+        <span className="text-caption text-ink-muted whitespace-nowrap pt-0.5">{time}</span>
       </div>
 
       {/* Title */}
-      <h4 className="font-headline-md text-headline-md text-on-surface group-hover:text-primary transition-colors line-clamp-2">
-        {item.title}
-      </h4>
+      <Link href={`/article/${item.id}`} className="mb-2">
+        <h3 className="text-h2 text-ink transition-colors duration-150 group-hover:text-accent line-clamp-2">
+          {item.title}
+        </h3>
+      </Link>
 
       {/* Summary */}
-      <p className="font-body-md text-body-md text-on-surface-variant line-clamp-3 flex-1">
-        {item.summary}
-      </p>
+      <p className="mb-5 text-body text-ink-secondary line-clamp-3">{item.summary}</p>
 
       {/* Footer */}
-      <div className="flex items-center justify-between pt-3 border-t border-surface-variant">
-        <span className="font-label-sm text-on-surface-variant">{formattedTime} • Deep Dive</span>
-        <Link
-          href={`/article/${item.id}`}
-          className="font-label-md text-secondary hover:text-on-secondary-container transition-colors flex items-center gap-1"
+      <div className="mt-auto flex items-center justify-between gap-3 border-t border-line-subtle pt-4">
+        <a
+          href={item.link}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="flex min-w-0 items-center gap-1.5 text-caption text-ink-muted transition-colors hover:text-accent"
         >
-          Read Full
-          <span className="material-symbols-outlined text-[16px] group-hover:translate-x-0.5 transition-transform">
-            arrow_forward
-          </span>
-        </Link>
+          <span className="truncate font-medium">{item.source}</span>
+          <ArrowUpRight size={12} strokeWidth={2} className="shrink-0" aria-hidden />
+        </a>
+        <div className="flex shrink-0 items-center gap-2">
+          <QaBadge status={item.qaStatus} />
+          <BookmarkButton digestId={item.id} />
+        </div>
       </div>
     </article>
   );

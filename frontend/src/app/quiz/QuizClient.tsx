@@ -1,10 +1,29 @@
 "use client";
 
-import React, { useState } from 'react';
-import { submitQuizAttempt } from '@/app/actions';
-import Link from 'next/link';
+import React, { useState } from "react";
+import { submitQuizAttempt } from "@/app/actions";
+import Link from "next/link";
+import {
+  ArrowRight,
+  Award,
+  CheckCircle2,
+  XCircle,
+  RotateCcw,
+  Trophy,
+  Home,
+  PenLine,
+} from "lucide-react";
 
-export function QuizClient({ initialQuizzes }: { initialQuizzes: any[] }) {
+type Quiz = {
+  id: string;
+  question: string;
+  options: string[];
+  correct_option_index: number;
+  explanation?: string | null;
+  difficulty?: string | null;
+};
+
+export function QuizClient({ initialQuizzes }: { initialQuizzes: Quiz[] }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isAnswered, setIsAnswered] = useState(false);
@@ -28,52 +47,66 @@ export function QuizClient({ initialQuizzes }: { initialQuizzes: any[] }) {
 
   const handleSubmit = async () => {
     if (selectedOption === null || isAnswered) return;
-    
     const correct = selectedOption === initialQuizzes[currentIndex].correct_option_index;
-    if (correct) setScore(score + 1);
+    if (correct) setScore((s) => s + 1);
     setIsAnswered(true);
-
-    // Record attempt in background
     await submitQuizAttempt(initialQuizzes[currentIndex].id, correct);
   };
 
+  /* ── Empty state ── */
   if (initialQuizzes.length === 0) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh] px-6 text-center">
-        <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-6">
-          <span className="material-symbols-outlined text-[40px] text-slate-400">quiz</span>
-        </div>
-        <h2 className="font-headline-xl text-indigo-950 mb-4">No Quizzes Today</h2>
-        <p className="font-body-lg text-slate-500 mb-8 max-w-md">
-          Check back later! Our AI is busy generating questions from the latest news briefings.
+      <div className="flex min-h-[70vh] flex-col items-center justify-center px-6 text-center">
+        <span className="flex h-16 w-16 items-center justify-center rounded-full bg-raised">
+          <PenLine size={26} className="text-ink-muted" aria-hidden />
+        </span>
+        <h1 className="text-h1 mt-6 text-ink">No quizzes today</h1>
+        <p className="mt-2 max-w-[380px] text-body text-ink-secondary">
+          Our AI is generating fresh questions from the latest briefings. Check back after
+          the next pipeline run.
         </p>
-        <Link href="/" className="px-8 py-3 bg-primary text-white rounded-xl font-label-md hover:bg-primary/90 transition-all shadow-sm">
-          Return to Dashboard
+        <Link href="/" className="btn btn-primary mt-8">
+          Return to dashboard
         </Link>
       </div>
     );
   }
 
+  /* ── Completed ── */
   if (completed) {
     const percentage = Math.round((score / initialQuizzes.length) * 100);
     return (
-      <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh] px-6 text-center animate-in fade-in zoom-in duration-500">
-        <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mb-6 text-green-600">
-          <span className="material-symbols-outlined text-[48px]">emoji_events</span>
-        </div>
-        <h2 className="font-headline-xl text-indigo-950 mb-2">Quiz Completed!</h2>
-        <p className="font-body-lg text-slate-500 mb-8">
-          You scored <span className="font-bold text-primary">{score} out of {initialQuizzes.length}</span> ({percentage}%)
+      <div className="flex min-h-[70vh] flex-col items-center justify-center px-6 text-center">
+        <span className="relative flex h-20 w-20 items-center justify-center rounded-full bg-accent-muted ring-1 ring-accent/40">
+          <Trophy size={34} className="text-accent" aria-hidden />
+          <span className="absolute -right-1 -top-1 flex h-7 w-7 items-center justify-center rounded-full bg-success text-[11px] font-bold text-ink-inverse">
+            {score}
+          </span>
+        </span>
+        <h1 className="text-display mt-6 text-ink">Quiz completed</h1>
+        <p className="mt-3 text-body-lg text-ink-secondary">
+          You scored{" "}
+          <span className="font-bold text-accent">
+            {score} / {initialQuizzes.length}
+          </span>{" "}
+          ({percentage}%)
         </p>
-        <div className="flex gap-4">
-          <Link href="/" className="px-8 py-3 bg-primary text-white rounded-xl font-label-md hover:bg-primary/90 transition-all shadow-sm">
+
+        <div className="mt-6 h-2 w-[260px] overflow-hidden rounded-full bg-raised">
+          <div
+            className="h-full rounded-full bg-accent transition-all duration-500"
+            style={{ width: `${percentage}%` }}
+          />
+        </div>
+
+        <div className="mt-8 flex flex-wrap justify-center gap-3">
+          <Link href="/" className="btn btn-primary">
+            <Home size={16} strokeWidth={2} />
             Dashboard
           </Link>
-          <button 
-            onClick={() => window.location.reload()}
-            className="px-8 py-3 bg-white border border-slate-200 text-indigo-950 rounded-xl font-label-md hover:bg-slate-50 transition-all"
-          >
-            Retake Quiz
+          <button onClick={() => window.location.reload()} className="btn btn-ghost">
+            <RotateCcw size={16} strokeWidth={2} />
+            Retake quiz
           </button>
         </div>
       </div>
@@ -81,103 +114,111 @@ export function QuizClient({ initialQuizzes }: { initialQuizzes: any[] }) {
   }
 
   const currentQuiz = initialQuizzes[currentIndex];
+  const total = initialQuizzes.length;
+  const progress = ((currentIndex + (isAnswered ? 1 : 0)) / total) * 100;
 
   return (
-    <div className="flex-1 px-gutter py-margin-page bg-slate-50/50 min-h-full">
-      <div className="max-w-3xl mx-auto">
-        <header className="flex justify-between items-center mb-10">
-          <div>
-            <h2 className="font-headline-xl text-indigo-950 mb-1">Daily Quiz</h2>
-            <p className="font-body-md text-slate-500">Question {currentIndex + 1} of {initialQuizzes.length}</p>
-          </div>
-          <div className="px-4 py-2 bg-white rounded-full border border-slate-200 shadow-sm flex items-center gap-2">
-            <span className="material-symbols-outlined text-amber-500 text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>stars</span>
-            <span className="font-label-md text-indigo-950">{score * 10} XP Earned</span>
-          </div>
-        </header>
+    <div className="mx-auto max-w-[760px] px-6 py-10">
+      <header className="mb-8 flex items-center justify-between">
+        <div>
+          <p className="text-label text-ink-muted">Daily quiz</p>
+          <h1 className="text-h1 mt-1 text-ink">
+            Question {currentIndex + 1} <span className="text-ink-muted">of {total}</span>
+          </h1>
+        </div>
+        <div className="flex items-center gap-2 rounded-full border border-line bg-surface px-4 py-2">
+          <Award size={16} className="text-warning" aria-hidden />
+          <span className="text-caption font-semibold text-ink">{score * 10} XP</span>
+        </div>
+      </header>
 
-        {/* Progress Bar */}
-        <div className="w-full h-1.5 bg-slate-200 rounded-full mb-12 overflow-hidden">
-          <div 
-            className="h-full bg-primary transition-all duration-500" 
-            style={{ width: `${((currentIndex + (isAnswered ? 1 : 0)) / initialQuizzes.length) * 100}%` }}
-          />
+      {/* Progress */}
+      <div className="mb-10 h-1.5 overflow-hidden rounded-full bg-raised">
+        <div
+          className="h-full rounded-full bg-accent transition-all duration-500"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+
+      {/* Question card */}
+      <div className="card overflow-hidden">
+        <div className="p-8 lg:p-10">
+          <span className="chip chip-general mb-6">
+            {currentQuiz.difficulty || "medium"}
+          </span>
+          <h2 className="text-h1 leading-snug text-ink">{currentQuiz.question}</h2>
+
+          <div className="mt-8 space-y-3">
+            {currentQuiz.options.map((option: string, i: number) => {
+              let cls = "border-line bg-transparent hover:bg-raised hover:border-line-strong";
+              let letterCls = "bg-raised text-ink-secondary group-hover:bg-overlay group-hover:text-ink";
+              let icon = null;
+
+              if (isAnswered) {
+                if (i === currentQuiz.correct_option_index) {
+                  cls = "border-success/60 bg-success-muted";
+                  letterCls = "bg-success text-ink-inverse";
+                  icon = <CheckCircle2 size={18} className="ml-auto shrink-0 text-success" />;
+                } else if (i === selectedOption) {
+                  cls = "border-danger/60 bg-danger-muted";
+                  letterCls = "bg-danger text-ink-inverse";
+                  icon = <XCircle size={18} className="ml-auto shrink-0 text-danger" />;
+                } else {
+                  cls = "border-line opacity-40";
+                }
+              } else if (selectedOption === i) {
+                cls = "border-accent bg-accent-muted/40";
+                letterCls = "bg-accent text-ink-inverse";
+              }
+
+              return (
+                <button
+                  key={i}
+                  onClick={() => handleSelect(i)}
+                  className={`group flex w-full items-center gap-4 rounded-xl border p-4 text-left transition-all ${cls}`}
+                >
+                  <span
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm font-bold transition-colors ${letterCls}`}
+                  >
+                    {String.fromCharCode(65 + i)}
+                  </span>
+                  <span className="text-body font-medium text-ink">{option}</span>
+                  {icon}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        <main className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-          <div className="p-8 lg:p-12">
-            <h3 className="font-headline-lg text-indigo-950 mb-10 leading-snug">
-              {currentQuiz.question}
-            </h3>
-
-            <div className="space-y-4">
-              {currentQuiz.options.map((option: string, i: number) => {
-                let statusClass = "border-slate-100 hover:border-primary/30 hover:bg-slate-50";
-                if (isAnswered) {
-                  if (i === currentQuiz.correct_option_index) {
-                    statusClass = "border-green-500 bg-green-50 text-green-700 ring-1 ring-green-500";
-                  } else if (i === selectedOption) {
-                    statusClass = "border-red-500 bg-red-50 text-red-700 ring-1 ring-red-500";
-                  } else {
-                    statusClass = "border-slate-100 opacity-50";
-                  }
-                } else if (selectedOption === i) {
-                  statusClass = "border-primary bg-primary/5 ring-1 ring-primary";
-                }
-
-                return (
-                  <button
-                    key={i}
-                    onClick={() => handleSelect(i)}
-                    className={`w-full p-5 rounded-2xl border-2 text-left transition-all flex items-center gap-4 group ${statusClass}`}
-                  >
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm transition-colors ${
-                      selectedOption === i ? 'bg-primary text-white' : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200'
-                    }`}>
-                      {String.fromCharCode(65 + i)}
-                    </div>
-                    <span className="font-body-lg font-medium">{option}</span>
-                    {isAnswered && i === currentQuiz.correct_option_index && (
-                      <span className="material-symbols-outlined ml-auto text-green-600">check_circle</span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+        {/* Footer */}
+        <div className="flex flex-col gap-4 border-t border-line-subtle bg-surface/60 p-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0 flex-1">
+            {isAnswered && (
+              <div className="animate-in slide-in-from-bottom-2 duration-300">
+                <p className="text-label text-ink-muted">Explanation</p>
+                <p className="mt-1 text-body-sm italic text-ink-secondary">
+                  {currentQuiz.explanation || "That's correct based on today's briefing."}
+                </p>
+              </div>
+            )}
           </div>
-
-          <div className="p-8 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
-            <div className="flex-1">
-              {isAnswered && (
-                <div className="animate-in slide-in-from-bottom-2 duration-300">
-                  <p className="font-label-sm text-slate-400 uppercase tracking-widest mb-1">Explanation</p>
-                  <p className="font-body-md text-slate-600 italic">
-                    {currentQuiz.explanation || "That is correct based on today's briefing."}
-                  </p>
-                </div>
-              )}
-            </div>
-            <div className="ml-8">
-              {!isAnswered ? (
-                <button
-                  disabled={selectedOption === null}
-                  onClick={handleSubmit}
-                  className="px-10 py-4 bg-primary text-white rounded-2xl font-label-md hover:bg-primary/90 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Submit Answer
-                </button>
-              ) : (
-                <button
-                  onClick={handleNext}
-                  className="px-10 py-4 bg-indigo-950 text-white rounded-2xl font-label-md hover:bg-indigo-900 transition-all shadow-md flex items-center gap-2"
-                >
-                  {currentIndex === initialQuizzes.length - 1 ? 'Finish Quiz' : 'Next Question'}
-                  <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
-                </button>
-              )}
-            </div>
+          <div className="shrink-0">
+            {!isAnswered ? (
+              <button
+                disabled={selectedOption === null}
+                onClick={handleSubmit}
+                className="btn btn-primary w-full sm:w-auto"
+              >
+                Submit answer
+              </button>
+            ) : (
+              <button onClick={handleNext} className="btn btn-primary w-full sm:w-auto">
+                {currentIndex === total - 1 ? "Finish quiz" : "Next question"}
+                <ArrowRight size={16} strokeWidth={2} />
+              </button>
+            )}
           </div>
-        </main>
+        </div>
       </div>
     </div>
   );
