@@ -8,7 +8,15 @@ export async function proxy(request: NextRequest) {
       headers: request.headers,
     },
   })
-  const env = getPublicSupabaseEnv()
+
+  // If the public env vars aren't configured (e.g. a preview deployment built
+  // without secrets), skip session refresh instead of crashing every route.
+  let env
+  try {
+    env = getPublicSupabaseEnv()
+  } catch {
+    return response
+  }
 
   const supabase = createServerClient(
     env.url,
