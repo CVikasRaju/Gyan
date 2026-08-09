@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { supabase } from "@/lib/auth";
+import { getSupabaseClient } from "@/lib/auth";
 import type { Session, User } from "@supabase/supabase-js";
 
 interface AuthContextProps {
@@ -29,6 +29,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
+    const supabase = getSupabaseClient();
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       syncAuthState(session);
     });
@@ -41,6 +42,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const signInWithGoogle = async () => {
+    const supabase = getSupabaseClient();
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -50,11 +52,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signInWithEmail = async (email: string, password: string) => {
+    const supabase = getSupabaseClient();
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     return { error: error?.message ?? null };
   };
 
   const signUpWithEmail = async (email: string, password: string) => {
+    const supabase = getSupabaseClient();
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -64,6 +68,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const resetPassword = async (email: string) => {
+    const supabase = getSupabaseClient();
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/account`,
     });
@@ -71,6 +76,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signOut = async () => {
+    const supabase = getSupabaseClient();
     await supabase.auth.signOut();
   };
 
